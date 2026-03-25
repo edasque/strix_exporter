@@ -133,9 +133,56 @@ All metrics are read fresh on each Prometheus scrape. No background polling or c
 
 ## Building
 
+Requires [Task](https://taskfile.dev/) (go-task).
+
 ```
-go build -o strix_exporter .
+task build        # build the binary
+task run          # build + run (pass flags via: task run -- --grbm)
+task vet          # go vet
+task fmt          # gofmt -w
+task check        # vet + fmt check
+task clean        # remove build artifacts
 ```
+
+## Docker
+
+The container needs access to the GPU's sysfs tree and DRM render node.
+
+### Build the image
+
+```
+task docker:build
+```
+
+### Run in the foreground
+
+```
+task docker:run               # plain
+task docker:run -- --grbm     # with GRBM sampling
+```
+
+### Run as a daemon
+
+```
+task docker:daemon            # start
+task docker:stop              # stop and remove
+```
+
+### Docker Compose
+
+A `docker-compose.yml` is included. To start:
+
+```
+task docker:compose
+```
+
+Or directly:
+
+```
+docker compose up -d --build
+```
+
+If the container cannot open the render node, uncomment the `group_add` lines in `docker-compose.yml` to add the `render` and/or `video` groups.
 
 ## Example output
 

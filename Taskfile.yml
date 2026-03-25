@@ -1,0 +1,71 @@
+version: "3"
+
+vars:
+  BINARY: strix_exporter
+  IMAGE: strix_exporter
+
+tasks:
+  build:
+    desc: Build the exporter binary
+    cmds:
+      - go build -o {{.BINARY}} .
+    sources:
+      - "*.go"
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.BINARY}}"
+
+  run:
+    desc: Build and run the exporter
+    deps: [build]
+    cmds:
+      - ./{{.BINARY}} {{.CLI_ARGS}}
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -f {{.BINARY}}
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  fmt:
+    desc: Format source code
+    cmds:
+      - gofmt -w *.go
+
+  check:
+    desc: Run all checks (vet + fmt check)
+    cmds:
+      - go vet ./...
+      - test -z "$(gofmt -l .)" || { gofmt -l .; echo "gofmt needed"; exit 1; }
+
+  docker:build:
+    desc: Build the Docker image
+    cmds:
+      - docker build -t {{.IMAGE}} .
+
+  docker:run:
+    desc: Run the container in the foreground
+    deps: [docker:build]
+    cmds:
+      - docker run --rm -p 9101:9101 --device /dev/dri -v /sys:/sys:ro {{.IMAGE}} {{.CLI_ARGS}}
+
+  docker:daemon:
+    desc: Run the container in daemon mode
+    deps: [docker:build]
+    cmds:
+      - docker run -d --name {{.IMAGE}} -p 9101:9101 --device /dev/dri -v /sys:/sys:ro --restart unless-stopped {{.IMAGE}} {{.CLI_ARGS}}
+
+  docker:stop:
+    desc: Stop and remove the daemon container
+    cmds:
+      - docker rm -f {{.IMAGE}}
+
+  docker:compose:
+    desc: Start with docker compose
+    cmds:
+      - docker compose up -d --build

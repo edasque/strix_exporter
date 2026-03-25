@@ -1,0 +1,13 @@
+services:
+  strix_exporter:
+    build: .
+    ports:
+      - "9101:9101"
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - /sys:/sys:ro
+    restart: unless-stopped
+    # group_add:
+    #   - render
+    #   - video
